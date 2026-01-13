@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>독도: 역사와 진실, 그리고 미래 (Dokdo: History, Truth, and Future)</title>
+    
+    <!-- Chosen Palette: 'Stone & Heritage' - Warm Stone background (#f5f5f4) for paper-like feel, 
+         Deep Navy (#1e3a8a) for authority/sea, Muted Red (#b91c1c) for accents/warning, 
+         Slate (#475569) for text. -->
+         
+    <!-- Application Structure Plan:
+         1. Hero Section: "The East Sea Context" - Interactive Scatter Map visualizing the geographical relationship (Ulleungdo vs Oki).
+         2. History Timeline: "Evidence Through Time" - Interactive selector for key historical documents (Korean vs Japanese).
+         3. Geography & Value: "Strategic Importance" - Dashboard with charts for island composition and geological age comparison.
+         4. Current Crisis: "Modern Challenges" - 3-Column grid focusing on Politics (Takaichi), Military (Black Eagles), and Technology (AI Bias).
+         5. AI & Tech Deep Dive: Specific interactive simulation showing how AI bias manifests (based on report).
+         6. Action Plan: "Future Strategy" - Interactive checklist/accordion for the 3 key strategies.
+    -->
+    
+    <!-- Visualization & Content Choices:
+         1. Geography Map (Chart.js Scatter): Visualizes distances to prove "visible on a clear day" (Sejong Sillok) and the Oki boundary (Onshu Shicho Goki).
+         2. Formation Age (Chart.js Bar): Compares Dokdo (4.6m yr) vs Ulleungdo/Jeju to emphasize it's the "eldest" brother.
+         3. AI Bias Impact (Chart.js Radar/Bar): conceptualizes the "Geopolitical Bias" scores mentioned in the text regarding LLMs.
+         4. History Cards (HTML/JS): Dynamic text replacement to allow reading original text vs meaning.
+         
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. 
+    -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/2.1.0/chartjs-plugin-annotation.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+            color: #1f2937; /* gray-800 */
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
+        }
+        
+        .card-shadow:hover {
+            transform: translateY(-2px);
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background-color: #cbd5e1; /* slate-300 */
+            z-index: 0;
+        }
+
+        .active-tab {
+            border-bottom: 2px solid #1e3a8a;
+            color: #1e3a8a;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-2">
+                        <div class="w-8 h-8 bg-blue-900 rounded-full flex items-center justify-center text-white font-bold">D</div>
+                        <span class="font-bold text-xl text-stone-800">Dokdo Insight</span>
+                    </div>
+                </div>
+                <div class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-6">
+                    <button onclick="scrollToSection('section-geo')" class="border-transparent text-stone-500 hover:text-blue-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-blue-900 text-sm font-medium transition-all">지리적 가치</button>
+                    <button onclick="scrollToSection('section-history')" class="border-transparent text-stone-500 hover:text-blue-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-blue-900 text-sm font-medium transition-all">역사적 증거</button>
+                    <button onclick="scrollToSection('section-issues')" class="border-transparent text-stone-500 hover:text-blue-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-blue-900 text-sm font-medium transition-all">최근 현안(AI)</button>
+                    <button onclick="scrollToSection('section-action')" class="border-transparent text-stone-500 hover:text-blue-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-blue-900 text-sm font-medium transition-all">대응 전략</button>
+                    
+                    <!-- Home Button at the top right -->
+                    <a href="index.html" class="ml-4 inline-flex items-center px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white text-sm font-bold rounded-md transition shadow-sm">
+                        홈으로
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header / Hero -->
+    <div class="bg-slate-900 text-white pb-12 pt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+                <h1 class="text-3xl md:text-5xl font-bold tracking-tight mb-4 leading-tight">
+                    독도: <span class="text-blue-300">대한민국의 아침을 여는 섬</span>
+                </h1>
+                <p class="text-slate-300 text-lg mb-6 leading-relaxed">
+                    역사적, 지리적, 국제법적으로 명백한 대한민국의 고유 영토.
+                    최근 급변하는 국제 정세와 AI 기술 환경 속에서 독도를 지키기 위한 올바른 지식과 대응 전략을 제시합니다.
+                </p>
+                <div class="flex gap-4">
+                    <button onclick="scrollToSection('section-geo')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">탐험하기</button>
+                    <div class="flex flex-col text-xs text-slate-400 justify-center">
+                        <span>위치: 경상북도 울릉군 울릉읍 독도리 1~96</span>
+                        <span>우편번호: 799-805</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-800 rounded-xl p-4 card-shadow border border-slate-700">
+                <div class="text-sm text-slate-400 mb-2 font-semibold text-center">동해 상의 거리 및 위치 관계 (시각화)</div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="locationChart"></canvas>
+                </div>
+                <p class="text-xs text-center text-slate-500 mt-2">
+                    * 세종실록지리지: "날씨가 맑으면 서로 볼 수 있다"<br>
+                    * 은주시청합기: 일본 경계를 오키섬으로 한정
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-20">
+
+        <!-- Section 1: Geographical Value -->
+        <section id="section-geo" class="scroll-mt-20">
+            <div class="mb-8 border-b border-stone-200 pb-4">
+                <h2 class="text-2xl font-bold text-stone-900">1. 지리적 특성 및 전략적 가치</h2>
+                <p class="mt-2 text-stone-600">
+                    독도는 약 460만 년 전 형성된 화산섬으로 울릉도보다 형님이자, 동해의 해양 및 안보 요충지입니다. 
+                    단순한 섬이 아닌, 하이드레이트 등 풍부한 자원의 보고입니다.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1: Formation -->
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-blue-800">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4">화산섬의 형님, 독도</h3>
+                    <div class="chart-container h-48">
+                        <canvas id="formationChart"></canvas>
+                    </div>
+                    <ul class="mt-4 space-y-2 text-sm text-stone-600">
+                        <li>🌋 <strong>독도:</strong> 약 460만~250만년 전 생성</li>
+                        <li>⛰️ <strong>울릉도:</strong> 약 250만년 전 생성</li>
+                        <li>🏝️ <strong>제주도:</strong> 약 120만년 전 생성</li>
+                    </ul>
+                </div>
+
+                <!-- Card 2: Composition -->
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-blue-600">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4">독도의 구성</h3>
+                    <div class="chart-container h-48">
+                        <canvas id="compositionChart"></canvas>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-2 text-sm text-center">
+                        <div class="bg-stone-100 p-2 rounded"><strong>동도</strong><br>해발 98.6m</div>
+                        <div class="bg-stone-100 p-2 rounded"><strong>서도</strong><br>해발 168.5m</div>
+                    </div>
+                    <p class="mt-2 text-xs text-stone-500 text-center">+ 89개의 부속 도서</p>
+                </div>
+
+                <!-- Card 3: Value -->
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-cyan-600">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4">전략적 가치</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-10 w-10 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 text-xl">🐟</div>
+                            <div class="ml-4">
+                                <h4 class="text-base font-medium text-stone-900">황금 어장</h4>
+                                <p class="text-sm text-stone-500">조경수역으로 풍부한 수산자원 보유.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-10 w-10 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 text-xl">⚡</div>
+                            <div class="ml-4">
+                                <h4 class="text-base font-medium text-stone-900">에너지 자원</h4>
+                                <p class="text-sm text-stone-500">차세대 에너지원 '메탄 하이드레이트' 매장.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-10 w-10 bg-cyan-100 rounded-full flex items-center justify-center text-cyan-600 text-xl">🛡️</div>
+                            <div class="ml-4">
+                                <h4 class="text-base font-medium text-stone-900">군사·안보</h4>
+                                <p class="text-sm text-stone-500">동해 중앙의 기상 및 해상 교통 요충지.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: History -->
+        <section id="section-history" class="scroll-mt-20">
+            <div class="mb-8 border-b border-stone-200 pb-4">
+                <h2 class="text-2xl font-bold text-stone-900">2. 역사적 근거와 기록</h2>
+                <p class="mt-2 text-stone-600">
+                    512년 신라의 우산국 복속부터 1900년 대한제국 칙령까지, 한국의 기록은 일관됩니다. 
+                    반면 일본의 고문서(태정관 지령 등)조차 독도가 일본 영토가 아님을 인정하고 있습니다.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[500px]">
+                <!-- Timeline List (Left) -->
+                <div class="lg:col-span-4 bg-white rounded-xl card-shadow overflow-hidden flex flex-col h-full">
+                    <div class="bg-stone-100 p-4 border-b font-bold text-stone-700">연대별 주요 기록</div>
+                    <div class="overflow-y-auto flex-1 p-2 space-y-2" id="timeline-list">
+                        <!-- Items generated by JS -->
+                    </div>
+                </div>
+
+                <!-- Detail View (Right) -->
+                <div class="lg:col-span-8 bg-white rounded-xl card-shadow p-8 flex flex-col justify-center relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 text-9xl font-serif text-stone-300 select-none">史</div>
+                    <div id="history-detail-content" class="z-10 transition-opacity duration-300">
+                        <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold mb-4" id="detail-year">512년</span>
+                        <h3 class="text-3xl font-bold text-stone-900 mb-4" id="detail-title">삼국사기 (신라본기)</h3>
+                        <div class="prose max-w-none text-stone-600 mb-6">
+                            <p id="detail-desc" class="text-lg">
+                                신라 지증왕 13년, 이사부가 우산국을 복속시켰다. 
+                                이는 독도가 한국의 역사와 영토로 편입된 최초의 기록으로, 
+                                울릉도와 독도가 하나의 정치적 단위였음을 시사한다.
+                            </p>
+                        </div>
+                        <div class="bg-stone-50 p-4 rounded-lg border-l-4 border-stone-400">
+                            <p class="text-sm font-serif italic text-stone-500" id="detail-quote">"이사부가 하슬라주 군주가 되어 우산국을 병합하였다."</p>
+                        </div>
+                        <div class="mt-6 flex gap-2" id="detail-tags">
+                            <span class="text-xs bg-stone-200 px-2 py-1 rounded">한국 측 기록</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Recent Issues & AI Bias -->
+        <section id="section-issues" class="scroll-mt-20">
+            <div class="mb-8 border-b border-stone-200 pb-4">
+                <h2 class="text-2xl font-bold text-stone-900">3. 최근 현안: 정치적 긴장과 기술적 도전</h2>
+                <p class="mt-2 text-stone-600">
+                    전통적인 영유권 분쟁을 넘어, 다카이치 내각의 우경화와 AI 플랫폼의 데이터 편향성이라는 새로운 도전에 직면해 있습니다.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <!-- Political/Military Issue -->
+                <div class="bg-white p-6 rounded-xl card-shadow border-l-4 border-red-600">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-bold text-red-900">정치·군사적 긴장 고조</h3>
+                        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">2025~Present</span>
+                    </div>
+                    <ul class="space-y-4">
+                        <li class="flex gap-3">
+                            <span class="text-2xl">🗳️</span>
+                            <div>
+                                <strong class="text-stone-800 block">다카이치 내각 출범</strong>
+                                <p class="text-sm text-stone-600">각료 대부분이 극우 성향. '영토·주권전시관' 등을 통한 왜곡 홍보 강화 및 조직적 도발.</p>
+                            </div>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="text-2xl">✈️</span>
+                            <div>
+                                <strong class="text-stone-800 block">블랙이글스 사건 (2025)</strong>
+                                <p class="text-sm text-stone-600">우리 군의 독도 상공 비행을 구실로 일본이 오키나와 기착 거부 및 수색구조훈련 연기 등 외교적 압박.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- AI Bias Issue -->
+                <div class="bg-white p-6 rounded-xl card-shadow border-l-4 border-indigo-600">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-bold text-indigo-900">디지털 영토 분쟁: AI 편향성</h3>
+                        <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">New Threat</span>
+                    </div>
+                    <p class="text-sm text-stone-600 mb-4">
+                        네이버, 구글 등 대형 플랫폼의 AI가 독도를 일본 땅으로 오표기하거나, LLM이 학습 데이터의 지정학적 편향으로 인해 한국의 맥락을 반영하지 못하는 사례가 급증하고 있습니다.
+                    </p>
+                    <div class="bg-stone-100 rounded-lg p-3">
+                        <div class="text-xs font-bold text-center text-stone-500 mb-2">LLM 지정학적 편향 시뮬레이션 (ArXiv 연구 기반 재구성)</div>
+                        <div class="chart-container h-40">
+                            <canvas id="aiBiasChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive AI Bias Explorer -->
+            <div class="bg-indigo-50 rounded-xl p-6 border border-indigo-100">
+                <h3 class="text-lg font-bold text-indigo-900 mb-2">AI는 독도를 어떻게 인식하는가?</h3>
+                <p class="text-sm text-indigo-700 mb-6">아래 버튼을 클릭하여 데이터 소스에 따른 AI의 답변 변화를 시뮬레이션해보세요.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        <button onclick="simulateAI('biased')" class="w-full text-left p-4 bg-white hover:bg-indigo-100 border border-indigo-200 rounded-lg transition group">
+                            <span class="font-bold text-stone-800 block group-hover:text-indigo-800">🔴 편향된 데이터 학습 모델</span>
+                            <span class="text-xs text-stone-500">서구권/일본 중심 데이터 비중이 높은 경우</span>
+                        </button>
+                        <button onclick="simulateAI('balanced')" class="w-full text-left p-4 bg-white hover:bg-indigo-100 border border-indigo-200 rounded-lg transition group">
+                            <span class="font-bold text-stone-800 block group-hover:text-indigo-800">🟢 한국 데이터 보정 모델</span>
+                            <span class="text-xs text-stone-500">국가유산 AI 데이터셋 등 정확한 사료 학습</span>
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-lg border border-stone-200 shadow-inner min-h-[120px] flex flex-col justify-center">
+                        <div class="text-xs text-stone-400 mb-1">AI Response Output:</div>
+                        <div id="ai-response-text" class="text-stone-800 font-mono text-sm typing-effect">
+                            시뮬레이션을 시작하려면 왼쪽 옵션을 선택하세요...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Action Plan -->
+        <section id="section-action" class="scroll-mt-20">
+            <div class="mb-8 border-b border-stone-200 pb-4">
+                <h2 class="text-2xl font-bold text-stone-900">4. 결론 및 대응 전략</h2>
+                <p class="mt-2 text-stone-600">
+                    감정적 대응을 넘어, 데이터 주권 확보와 논리적 홍보가 필요한 시점입니다.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl card-shadow flex flex-col items-center text-center hover:bg-stone-50 transition">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl mb-4">📚</div>
+                    <h3 class="font-bold text-lg mb-2">사료의 디지털화</h3>
+                    <p class="text-sm text-stone-600">
+                        '태정관 지령' 등 핵심 사료를 고품질 데이터로 구축하고 영문화하여 전 세계 접근성을 높여야 합니다.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-xl card-shadow flex flex-col items-center text-center hover:bg-stone-50 transition">
+                    <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl mb-4">🤖</div>
+                    <h3 class="font-bold text-lg mb-2">AI 데이터 주권</h3>
+                    <p class="text-sm text-stone-600">
+                        글로벌 플랫폼에 수정을 요구하고, 국가 차원의 신뢰할 수 있는 데이터셋(국가유산 AI)을 배포해야 합니다.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-xl card-shadow flex flex-col items-center text-center hover:bg-stone-50 transition">
+                    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl mb-4">🤝</div>
+                    <h3 class="font-bold text-lg mb-2">미래지향적 교류</h3>
+                    <p class="text-sm text-stone-600">
+                        정확한 지식을 바탕으로 일본 시민사회와 소통하며 평화적 해결의 토대를 마련해야 합니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-stone-800 text-stone-300 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h2 class="text-white text-lg font-bold mb-4">Dokdo Insight Report</h2>
+                <p class="text-sm leading-relaxed mb-4">
+                    본 페이지는 제공된 독도 관련 사료, 연구 보고서, 최신 뉴스 기사를 바탕으로 구성된 인터랙티브 리포트입니다.<br>
+                    독도는 대한민국의 역사이자 자존심입니다.
+                </p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm">참고 자료: 삼국사기, 세종실록지리지, 태정관지령, SCAPIN 677, 동북아역사재단 등</p>
+                <p class="text-xs text-stone-500 mt-2">© 2026 Interactive Dokdo Report Project.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- State Management & Data ---
+        
+        // 1. History Data
+        const historyData = [
+            {
+                year: '512',
+                era: '신라',
+                title: '이사부의 우산국 복속 (삼국사기)',
+                desc: '신라 지증왕 13년, 이사부가 우산국을 정벌하여 복속시켰다. 이는 울릉도와 독도가 한국의 역사와 통치권 안으로 들어온 최초의 기록이다.',
+                quote: '"이사부가 하슬라주 군주가 되어 우산국을 병합하였다."',
+                type: 'korea'
+            },
+            {
+                year: '1454',
+                era: '조선',
+                title: '세종실록지리지',
+                desc: '조선 초기 지리서에 독도(우산)와 울릉도(무릉)가 명확히 기록되었다. 특히 두 섬이 서로 보여 같은 생활권임을 명시했다.',
+                quote: '"우산(독도)과 무릉(울릉도) 두 섬이 울진현 정동쪽에 있으며, 날씨가 맑으면 서로 볼 수 있다."',
+                type: 'korea'
+            },
+            {
+                year: '1667',
+                era: '일본(에도)',
+                title: '은주시청합기 (일본 고문헌)',
+                desc: '일본 관리가 저술한 보고서로, 일본의 서북쪽 경계를 오키섬으로 한정했다. 즉, 울릉도와 독도는 일본 영토 밖임을 스스로 인정한 것이다.',
+                quote: '"오키섬을 서북쪽의 경계로 삼는다."',
+                type: 'japan'
+            },
+            {
+                year: '1696',
+                era: '조선',
+                title: '안용복 사건',
+                desc: '안용복이 일본 막부에 울릉도와 독도가 조선 땅임을 확인받고 돌아왔다. 이로 인해 돗토리번 답변서 등에서 일본이 영유권을 부인하는 계기가 되었다.',
+                quote: '"울릉도와 독도는 돗토리번에 속하지 않는다."',
+                type: 'korea'
+            },
+            {
+                year: '1877',
+                era: '일본(메이지)',
+                title: '태정관 지령',
+                desc: '근대 일본 최고 국가기관인 태정관이 내무성에 내린 공식 지령. "죽도(울릉도) 외 1도(독도)는 일본과 관계가 없다"고 명확히 결론 내렸다.',
+                quote: '"품의한 취지의 죽도(울릉도) 외 일도(독도)의 건에 대해서는 본방(일본)과 관계가 없음을 명심할 것."',
+                type: 'japan'
+            },
+            {
+                year: '1900',
+                era: '대한제국',
+                title: '대한제국 칙령 제41호',
+                desc: '고종 황제가 울릉도를 울도군으로 승격시키고, 관할 구역에 석도(독도)를 포함시켜 근대 국제법적으로 영유권을 확고히 했다.',
+                quote: '"울도군 관할 구역은 울릉전도와 죽도, 석도(독도)로 한다."',
+                type: 'korea'
+            },
+            {
+                year: '1946',
+                era: '국제',
+                title: 'SCAPIN 677',
+                desc: '연합군 최고사령부 지령 제677호. 일본의 통치권 행사가 정지되는 지역에 독도를 명시하여 한국 영토로 반환됨을 확인했다.',
+                quote: '"일본의 정의에서 울릉도, 독도, 제주도는 제외된다."',
+                type: 'global'
+            }
+        ];
+
+        // --- Chart Initialization ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initFormationChart();
+            initCompositionChart();
+            initLocationChart();
+            initAIBiasChart();
+            renderTimeline();
+        });
+
+        // 1. Formation Chart (Bar)
+        function initFormationChart() {
+            const ctx = document.getElementById('formationChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['독도', '울릉도', '제주도'],
+                    datasets: [{
+                        label: '형성 시기 (만 년 전)',
+                        data: [460, 250, 120],
+                        backgroundColor: ['#1e3a8a', '#94a3b8', '#cbd5e1'],
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            title: { display: true, text: '약 만 년 전' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Composition Chart (Doughnut)
+        function initCompositionChart() {
+            const ctx = document.getElementById('compositionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['동도', '서도', '부속도서(89개)'],
+                    datasets: [{
+                        data: [1, 1, 89],
+                        backgroundColor: ['#1e3a8a', '#1d4ed8', '#94a3b8'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // 3. Location Chart (Scatter - Conceptual Map)
+        function initLocationChart() {
+            const ctx = document.getElementById('locationChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: '주요 지역',
+                            data: [
+                                {x: 1, y: 5, label: '울진(Korea)'},
+                                {x: 3, y: 6, label: '울릉도'},
+                                {x: 4.5, y: 5.5, label: '독도'}, // Center-ish
+                                {x: 7, y: 3, label: '오키섬'},
+                                {x: 8, y: 2, label: '일본 본토'}
+                            ],
+                            backgroundColor: ['#3b82f6', '#22c55e', '#ef4444', '#94a3b8', '#64748b'],
+                            pointRadius: [8, 10, 12, 8, 10], // Highlight Dokdo
+                            pointHoverRadius: 14
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { display: false, min: 0, max: 9 },
+                        y: { display: false, min: 0, max: 8 }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.raw.label;
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    xMin: 3, xMax: 4.5, yMin: 6, yMax: 5.5,
+                                    borderColor: 'rgba(0,0,0,0.2)',
+                                    borderDash: [5, 5],
+                                    label: { display: true, content: '87.4km (가시거리)', font: {size: 10} }
+                                },
+                                line2: {
+                                    type: 'line',
+                                    xMin: 4.5, xMax: 7, yMin: 5.5, yMax: 3,
+                                    borderColor: 'rgba(0,0,0,0.2)',
+                                    borderDash: [5, 5],
+                                    label: { display: true, content: '157.5km', font: {size: 10} }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. AI Bias Chart (Bar - Conceptual)
+        function initAIBiasChart() {
+            const ctx = document.getElementById('aiBiasChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['서구권 모델', '일본 모델', '한국 모델(이상적)'],
+                    datasets: [{
+                        label: '독도 관련 정확한 역사 인식률 (%)',
+                        data: [45, 10, 95], // Conceptual values based on bias discussion
+                        backgroundColor: ['#cbd5e1', '#ef4444', '#22c55e']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: { beginAtZero: true, max: 100 }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // --- Logic: Timeline Interaction ---
+
+        function renderTimeline() {
+            const listEl = document.getElementById('timeline-list');
+            
+            historyData.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-4 hover:bg-stone-50 transition border-l-4 ${index === 0 ? 'border-blue-800 bg-stone-50' : 'border-transparent'}`;
+                btn.onclick = () => selectTimelineItem(index, btn);
+                btn.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-lg text-stone-800">${item.year}</span>
+                        <span class="text-xs px-2 py-1 rounded ${item.type === 'korea' ? 'bg-blue-100 text-blue-800' : (item.type === 'japan' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')}">${item.era}</span>
+                    </div>
+                    <div class="text-sm text-stone-600 truncate mt-1">${item.title}</div>
+                `;
+                listEl.appendChild(btn);
+            });
+        }
+
+        function selectTimelineItem(index, btnElement) {
+            // Update UI styles
+            const list = document.getElementById('timeline-list');
+            Array.from(list.children).forEach(child => {
+                child.classList.remove('border-blue-800', 'bg-stone-50');
+                child.classList.add('border-transparent');
+            });
+            btnElement.classList.remove('border-transparent');
+            btnElement.classList.add('border-blue-800', 'bg-stone-50');
+
+            // Update Content
+            const data = historyData[index];
+            const contentDiv = document.getElementById('history-detail-content');
+            
+            // Simple fade effect
+            contentDiv.style.opacity = 0;
+            setTimeout(() => {
+                document.getElementById('detail-year').innerText = `${data.year}년 - ${data.era}`;
+                document.getElementById('detail-title').innerText = data.title;
+                document.getElementById('detail-desc').innerText = data.desc;
+                document.getElementById('detail-quote').innerText = data.quote;
+                
+                const tags = document.getElementById('detail-tags');
+                tags.innerHTML = '';
+                const badge = document.createElement('span');
+                badge.className = `text-xs px-2 py-1 rounded ${data.type === 'korea' ? 'bg-blue-100 text-blue-800' : (data.type === 'japan' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')}`;
+                badge.innerText = data.type === 'korea' ? '한국 측 기록' : (data.type === 'japan' ? '일본 측 기록 (모순)' : '국제 문서');
+                tags.appendChild(badge);
+
+                contentDiv.style.opacity = 1;
+            }, 300);
+        }
+
+        // --- Logic: AI Simulation ---
+        function simulateAI(mode) {
+            const output = document.getElementById('ai-response-text');
+            output.innerText = "";
+            output.classList.remove('text-red-600', 'text-green-700');
+            
+            let text = "";
+            
+            if (mode === 'biased') {
+                text = "사용자 질문: 'Dokdo'의 영유권은?\nAI 답변: 독도(Liancourt Rocks)는 한국과 일본 간의 영토 분쟁 지역입니다. 일본에서는 다케시마라고 부르며...";
+                output.classList.add('text-red-600');
+            } else {
+                text = "사용자 질문: 'Dokdo'의 영유권은?\nAI 답변: 독도는 역사적, 지리적, 국제법적으로 대한민국의 고유 영토입니다. 1900년 대한제국 칙령 제41호와 1946년 SCAPIN 677에 의해 명확히 확인되었습니다.";
+                output.classList.add('text-green-700');
+            }
+            
+            // Typewriter effect
+            let i = 0;
+            function typeWriter() {
+                if (i < text.length) {
+                    output.innerHTML += text.charAt(i) === '\n' ? '<br>' : text.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 30);
+                }
+            }
+            typeWriter();
+        }
+
+        // --- Utility: Smooth Scroll ---
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+    </script>
+</body>
+</html>
