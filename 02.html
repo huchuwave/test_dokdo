@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>독도 역사 아카이브: 인터랙티브 타임라인</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #fdfbf7; /* Warm neutral background */
+            color: #2c2c2c;
+        }
+        /* Changed to Sans-serif for all headers and specific classes */
+        h1, h2, h3, .serif {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            height: 300px;
+            margin: 0 auto;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .timeline-line {
+            position: absolute;
+            left: 24px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e5e7eb;
+            z-index: 0;
+        }
+        .timeline-item:last-child .timeline-line {
+            display: none;
+        }
+        /* Custom scrollbar for timeline list */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #d1d5db; 
+            border-radius: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af; 
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals & Earth Tones (Cream #fdfbf7, Slate #2c2c2c, Muted Blue #4a6fa5, Clay Red #c06c5d, Sage Green #768a76) -->
+    <!-- Application Structure Plan: Dashboard layout. Top section for aggregate insights (Chart.js) to show record distribution by actor/era. Bottom section for a detailed, filterable timeline feed. Focus on "Evidence Exploration" allowing users to cross-reference historical claims. -->
+    <!-- Visualization & Content Choices: 
+         1. Interactive Bar Chart: Shows count of historical records by Actor (Korea/Japan/International). Goal: Compare volume of evidence. Interaction: Click bar to filter timeline.
+         2. Dynamic Timeline Feed: Main content area. Cards for each event. Goal: Detailed reading.
+         3. Filter Controls: Dropdowns for quick segmentation.
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Header Section -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+                <div class="w-8 h-8 bg-blue-800 rounded-full flex items-center justify-center text-white font-bold serif">독</div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">독도 역사 아카이브</h1>
+            </div>
+            <nav class="flex items-center space-x-3 text-sm font-medium text-gray-500">
+                <a href="index.html" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 border border-gray-200 hover:border-blue-200 transition-all duration-200">
+                    <i class="fas fa-home"></i>
+                    <span>홈으로</span>
+                </a>
+                <span class="h-4 w-px bg-gray-300 mx-1"></span>
+                <span id="total-records" class="text-blue-700 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100">기록 로딩중...</span>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Controls & Analytics (Sticky on Desktop) -->
+        <aside class="lg:col-span-1 space-y-6">
+            
+            <!-- Introduction -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-bold mb-3 text-gray-800 border-b border-gray-100 pb-2">아카이브 소개</h2>
+                <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                    이 인터랙티브 연표는 선사시대부터 현대에 이르는 독도 관련 역사적 기록과 사건을 망라합니다. 
+                    <br><br>
+                    한국, 일본, 그리고 국제 사회의 기록을 비교 분석하여 독도 영유권의 역사적 진실을 탐구해 보세요.
+                </p>
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-800 serif" id="stat-start-year">Wait</div>
+                        <div class="text-xs text-gray-500">최초 기록 (연도)</div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-800 serif" id="stat-count">0</div>
+                        <div class="text-xs text-gray-500">수록된 사건</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Chart -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-bold mb-3 text-gray-800">기록 분포 분석</h2>
+                <p class="text-xs text-gray-500 mb-4">국가 및 주체별 역사적 기록의 빈도를 시각화했습니다. 그래프를 클릭하면 해당 기록만 필터링됩니다.</p>
+                
+                <div class="chart-container">
+                    <canvas id="historyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-24">
+                <h2 class="text-lg font-bold mb-4 text-gray-800 flex items-center justify-between">
+                    <span>필터링 및 검색</span>
+                    <button id="reset-btn" class="text-xs text-blue-600 hover:underline font-normal hidden">초기화</button>
+                </h2>
+                
+                <div class="space-y-4">
+                    <!-- Search -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">키워드 검색</label>
+                        <input type="text" id="search-input" placeholder="예: 안용복, 칙령, 지도..." 
+                            class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                    </div>
+
+                    <!-- Actor Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">관련 국가/주체</label>
+                        <div class="flex flex-wrap gap-2" id="actor-filters">
+                            <!-- JS populated buttons -->
+                        </div>
+                    </div>
+
+                    <!-- Era Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">시대 구분</label>
+                        <select id="era-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">전체 시대</option>
+                            <!-- JS populated options -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Right Column: Timeline Feed -->
+        <section class="lg:col-span-2">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-800 serif">역사 연표</h2>
+                <span id="result-count" class="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                    전체 보기
+                </span>
+            </div>
+
+            <!-- Timeline Container -->
+            <div id="timeline-feed" class="space-y-0 relative pl-2">
+                <!-- JS populated items -->
+            </div>
+            
+            <div id="no-results" class="hidden text-center py-12 text-gray-500">
+                <p class="mb-2 text-4xl">🧐</p>
+                <p>검색 결과가 없습니다.</p>
+                <button onclick="resetFilters()" class="mt-4 text-blue-600 font-medium hover:underline">필터 초기화</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-gray-300 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="font-bold mb-2">독도 역사 아카이브</p>
+            <p class="text-xs text-gray-500">제공된 원본 데이터를 바탕으로 제작된 인터랙티브 웹 애플리케이션입니다.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- Data Source ---
+        // Based on the provided Dokdo history markdown table
+        const rawData = [
+            { year: "선사/고대", yearVal: -4600000, category: "지리/형성", actor: "자연", content: "약 460~250만 년 전: 화산 활동으로 독도 생성 (울릉도보다 먼저 생성됨)", source: "[1]" },
+            { year: "512년", yearVal: 512, category: "역사(삼국)", actor: "한국", content: "우산국 복속: 신라 지증왕 때 이사부가 우산국을 정벌함 (자료 내 직접 연도 언급은 없으나 '우산도' 명칭 유래로 삼국시대 언급)", source: "[2]" },
+            { year: "1454년", yearVal: 1454, category: "조선(기록)", actor: "한국", content: "세종실록지리지: 우산(독도)과 무릉(울릉도) 두 섬이 울진현 정동쪽에 있으며, 날씨가 맑으면 서로 볼 수 있다고 기록", source: "[3]" },
+            { year: "1481년", yearVal: 1481, category: "조선(지도)", actor: "한국", content: "팔도총도: 동해상에 울릉도와 우산도(독도) 두 개의 섬을 그림", source: "[4]" },
+            { year: "1531년", yearVal: 1531, category: "조선(기록)", actor: "한국", content: "신증동국여지승람: 우산도와 울릉도가 강원도 울진현 소속임을 명시하며, '팔도총도'가 첨부됨", source: "[3], [4]" },
+            { year: "1667년", yearVal: 1667, category: "일본(기록)", actor: "일본", content: "은주시청합기: 일본의 오키섬을 일본의 서북쪽 경계로 삼아, 울릉도와 독도가 조선 땅임을 간접 시사함", source: "[5]" },
+            { year: "1693년", yearVal: 1693, category: "조선/일본", actor: "한일관계", content: "1차 안용복 사건: 안용복이 일본으로 납치되어 울릉도와 독도가 조선 땅임을 주장하고 돌아옴", source: "[6]" },
+            { year: "1695년", yearVal: 1695, category: "일본(기록)", actor: "일본", content: "돗토리번 답변서: 에도 막부의 질문에 대해 돗토리번이 울릉도와 독도가 돗토리번 소속이 아님을 답변함", source: "[7], [8]" },
+            { year: "1696년", yearVal: 1696, category: "조선/일본", actor: "한일관계", content: "2차 안용복 사건: 안용복이 일본 호키주에 가서 독도 영유권을 주장. 일본 막부가 '울릉도 도해 금지령'을 내림", source: "[7]" },
+            { year: "1697년", yearVal: 1697, category: "조선(정책)", actor: "한국", content: "수토관 제도 시행: 안용복 사건 이후 조선 정부가 울릉도와 주변 섬을 3년에 한 번씩 관리하는 수토관을 파견하기 시작", source: "[8]" },
+            { year: "1779년", yearVal: 1779, category: "일본(지도)", actor: "일본", content: "개정일본여지로정전도: 나가쿠보 세키스이가 제작. 울릉도와 독도를 일본 영토와 다른 색(채색 없음)으로 표시하여 일본 영역 밖으로 둠", source: "[9]" },
+            { year: "1785년", yearVal: 1785, category: "일본(지도)", actor: "일본", content: "삼국접양지도: 하야시 시헤이가 제작. 독도와 울릉도를 조선과 같은 황색으로 칠하고 '조선의 것'이라고 표기", source: "[9]" },
+            { year: "1787년", yearVal: 1787, category: "서양(기록)", actor: "서양/국제", content: "프랑스가 울릉도를 발견하고 '다즐레'로 명명", source: "[10]" },
+            { year: "1789년", yearVal: 1789, category: "서양(기록)", actor: "서양/국제", content: "영국이 울릉도를 '아르고노트'로 명명 (이후 서양 지도에서 울릉도/독도 혼동의 원인)", source: "[10]" },
+            { year: "1808년", yearVal: 1808, category: "조선(기록)", actor: "한국", content: "만기요람: 울릉과 우산은 모두 우산국의 땅이며, 우산은 일본인이 말하는 송도(독도)라고 기록", source: "[11]" },
+            { year: "1832년", yearVal: 1832, category: "서양(지도)", actor: "서양/국제", content: "삼국통람도: 독일인 클라프로트 제작. 독도와 울릉도를 한국과 같은 노란색으로 표시", source: "[12]" },
+            { year: "1835년", yearVal: 1835, category: "일본(지도)", actor: "일본", content: "아세아소동양도: 나가쿠보 세키스이 제작. 이전 지도와 달리 독도와 울릉도를 일본 영토인 빨간색으로 표기하는 오류를 범함", source: "[13]" },
+            { year: "1849년", yearVal: 1849, category: "서양(기록)", actor: "서양/국제", content: "프랑스 포경선 리앙쿠르호가 독도를 발견하고 '리앙쿠르 암'으로 명명", source: "[10]" },
+            { year: "1854년", yearVal: 1854, category: "서양(기록)", actor: "서양/국제", content: "러시아 군함이 독도를 발견하고 동도를 '메넬라이', 서도를 '올리부차'로 명명", source: "[10]" },
+            { year: "1857년", yearVal: 1857, category: "러시아(지도)", actor: "서양/국제", content: "한반도 동해안 지도: 러시아 해군 수로국이 독도를 한국의 영토로 인정하여 지도 제작", source: "[12]" },
+            { year: "1870년", yearVal: 1870, category: "일본(기록)", actor: "일본", content: "조선국 교제시말 내탐서: 일본 외무성 관료가 울릉도와 독도가 조선에 속하게 된 사정을 보고함", source: "[14]" },
+            { year: "1877년", yearVal: 1877, category: "일본(문서)", actor: "일본", content: "태정관 지령: 일본 최고 행정기관인 태정관이 '울릉도와 독도는 일본과 관계없다'는 것을 공식적으로 지시함", source: "[14], [15]" },
+            { year: "1900년", yearVal: 1900, category: "대한제국", actor: "한국", content: "칙령 제41호 (10월 25일): 울릉도를 울도로 개칭하고 관할 구역에 '석도(독도)'를 명시하여 영토 주권 선포", source: "[11]" },
+            { year: "1904년", yearVal: 1904, category: "일본", actor: "일본", content: "나카이 요자부로가 일본 정부에 독도 편입 청원서 제출", source: "[15]" },
+            { year: "1905년", yearVal: 1905, category: "일본", actor: "일본", content: "시마네현 고시 제40호 (2월 22일): 일본이 독도를 '다케시마'로 개칭하고 시마네현에 불법 편입 (러일전쟁 중)", source: "[10], [15]" },
+            { year: "1906년", yearVal: 1906, category: "대한제국", actor: "한국", content: "울릉군수 심흥택이 일본의 독도 편입 소식을 듣고 강원도 관찰사에 보고, 의정부에서 '지령 3호'로 일본의 주장을 반박", source: "[5]" },
+            { year: "1946년", yearVal: 1946, category: "국제(연합국)", actor: "서양/국제", content: "SCAPIN 제677호 (1월 29일): 연합군최고사령관 지령으로 독도를 일본의 통치 구역에서 제외하고 한국 영토로 인정", source: "[16]" },
+            { year: "1950년", yearVal: 1950, category: "국제(연합국)", actor: "서양/국제", content: "연합국 구일본영토처리에 관한 합의서: 독도를 한국 영토로 표시한 부속지도 포함", source: "[17]" },
+            { year: "1951년", yearVal: 1951, category: "국제/한국", actor: "한일관계", content: "평화선(이승만 라인) 선포 (1월): 독도를 포함한 인접 해양 주권 선언. 샌프란시스코 강화조약 체결 (9월): 일본 로비로 독도 명칭이 최종 조약문에서 빠졌으나, 초기 초안(1947)에는 한국 영토로 명시됨", source: "[17], [18]" },
+            { year: "1952년", yearVal: 1952, category: "한국", actor: "한국", content: "이승만 평화선 본격 시행, 독도 주변 일본 어선 단속", source: "[18]" },
+            { year: "1953년", yearVal: 1953, category: "한국", actor: "한국", content: "독도의용수비대 활동 시작: 홍순칠 대장 등 민간인들이 독도에 상주하며 일본의 침탈을 막아냄. 독도경비대 상주 시작: 울릉경찰서 소속으로 상시 주둔 시작", source: "[6], [7]" },
+            { year: "1954년", yearVal: 1954, category: "일본", actor: "일본", content: "일본이 독도 문제를 국제사법재판소(ICJ)에 회부할 것을 제안했으나 한국 거부", source: "[19]" },
+            { year: "1965년", yearVal: 1965, category: "한국/일본", actor: "한일관계", content: "한일기본조약 체결: 독도 문제를 해결하지 않은 상태(사실상 한국의 점거 유지)로 국교 정상화 (이른바 독도 밀약설)", source: "[19]" },
+            { year: "1968년", yearVal: 1968, category: "한국", actor: "한국", content: "최종덕, 최초의 독도 주민 등록: 서도에 거주 시설을 짓고 생활 시작", source: "[8]" },
+            { year: "1998년", yearVal: 1998, category: "한국/일본", actor: "한일관계", content: "신한일 어업협정 체결: 독도가 한일 중간수역에 포함되어 영유권 논란 및 어민 피해 발생 (독도 지명 미표기, 좌표만 표기)", source: "[20], [21]" },
+            { year: "1999년", yearVal: 1999, category: "한국", actor: "한국", content: "시민단체 '독도수호대' 결성, '독도의 날' 제정 운동 시작", source: "[17]" },
+            { year: "2005년", yearVal: 2005, category: "일본", actor: "일본", content: "'다케시마의 날' 제정 (3월): 시마네현 의회가 매년 2월 22일을 기념일로 지정하는 조례 통과", source: "[22]" },
+            { year: "2006년", yearVal: 2006, category: "한국", actor: "한국", content: "노무현 대통령, 한일관계 관련 대국민 특별담화 발표 (독도 수호 의지 천명)", source: "[23]" },
+            { year: "2008년", yearVal: 2008, category: "한국/일본", actor: "한일관계", content: "한국: 동북아역사재단 독도연구소 설립. 일본: 문부과학성 학습지도요령 해설서에 독도 영유권 주장 기술 시작", source: "[16], [24]" },
+            { year: "2011년", yearVal: 2011, category: "일본", actor: "일본", content: "일본 중학교 교과서 검정: 지리, 공민뿐만 아니라 역사 교과서에도 '일본 고유 영토' 기술 확대", source: "[24], [25]" },
+            { year: "2015년", yearVal: 2015, category: "일본", actor: "일본", content: "일본 초등학교 교과서에 '한국이 불법 점거'라는 내용 기술 포함", source: "[26]" }
+        ];
+
+        // --- State Management ---
+        const state = {
+            searchQuery: '',
+            selectedActor: null,
+            selectedEra: 'all',
+            filteredData: [...rawData]
+        };
+
+        // --- Colors ---
+        const colors = {
+            korea: '#3b82f6', // blue-500
+            japan: '#ef4444', // red-500
+            relation: '#8b5cf6', // violet-500
+            international: '#10b981', // emerald-500
+            nature: '#d97706', // amber-600
+            bg: {
+                korea: '#eff6ff', // blue-50
+                japan: '#fef2f2', // red-50
+                relation: '#f5f3ff', // violet-50
+                international: '#ecfdf5', // emerald-50
+                nature: '#fffbeb' // amber-50
+            }
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFilters();
+            updateStatistics();
+            renderChart();
+            renderTimeline();
+            setupEventListeners();
+        });
+
+        // --- Core Logic ---
+
+        function getActorCategory(rawActor) {
+            if (rawActor.includes('한국') || rawActor.includes('조선') || rawActor.includes('대한제국')) return 'korea';
+            if (rawActor.includes('일본')) return 'japan';
+            if (rawActor.includes('서양') || rawActor.includes('러시아') || rawActor.includes('국제')) return 'international';
+            if (rawActor.includes('한일')) return 'relation';
+            return 'nature';
+        }
+
+        function getActorLabel(cat) {
+            switch(cat) {
+                case 'korea': return '한국 (Korea)';
+                case 'japan': return '일본 (Japan)';
+                case 'international': return '국제/서양';
+                case 'relation': return '한일 관계';
+                case 'nature': return '지리/형성';
+                default: return '기타';
+            }
+        }
+
+        function getColor(cat) {
+            return colors[cat] || '#9ca3af';
+        }
+        
+        function getBgColor(cat) {
+            return colors.bg[cat] || '#f3f4f6';
+        }
+
+        function categorizeEras(data) {
+            const eras = new Set();
+            data.forEach(d => {
+                if (d.yearVal < 1392) eras.add('고대/삼국/고려');
+                else if (d.yearVal < 1910) eras.add('조선/대한제국');
+                else if (d.yearVal < 1945) eras.add('일제강점기');
+                else eras.add('현대 (광복 이후)');
+            });
+            return Array.from(eras);
+        }
+
+        function getEraForYear(yearVal) {
+            if (yearVal < 1392) return '고대/삼국/고려';
+            if (yearVal < 1910) return '조선/대한제국';
+            if (yearVal < 1945) return '일제강점기';
+            return '현대 (광복 이후)';
+        }
+
+        function initializeFilters() {
+            // Actor Filters
+            const actors = ['korea', 'japan', 'relation', 'international', 'nature'];
+            const container = document.getElementById('actor-filters');
+            
+            actors.forEach(actor => {
+                const btn = document.createElement('button');
+                btn.className = `px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200`;
+                btn.style.borderColor = getColor(actor);
+                btn.style.color = getColor(actor);
+                btn.style.backgroundColor = 'white';
+                btn.textContent = getActorLabel(actor);
+                btn.dataset.actor = actor;
+                
+                btn.addEventListener('click', () => {
+                    if (state.selectedActor === actor) {
+                        state.selectedActor = null;
+                        btn.style.backgroundColor = 'white';
+                        btn.style.color = getColor(actor);
+                    } else {
+                        // Reset others
+                        Array.from(container.children).forEach(c => {
+                            c.style.backgroundColor = 'white';
+                            c.style.color = getColor(c.dataset.actor);
+                        });
+                        state.selectedActor = actor;
+                        btn.style.backgroundColor = getColor(actor);
+                        btn.style.color = 'white';
+                    }
+                    applyFilters();
+                });
+                container.appendChild(btn);
+            });
+
+            // Era Filters
+            const eraSelect = document.getElementById('era-select');
+            const eras = categorizeEras(rawData);
+            eras.forEach(era => {
+                const opt = document.createElement('option');
+                opt.value = era;
+                opt.textContent = era;
+                eraSelect.appendChild(opt);
+            });
+        }
+
+        function updateStatistics() {
+            document.getElementById('total-records').textContent = `총 ${rawData.length} 건의 기록`;
+            document.getElementById('stat-start-year').textContent = '512년'; // historical start
+            document.getElementById('stat-count').textContent = rawData.length;
+        }
+
+        function setupEventListeners() {
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.toLowerCase();
+                applyFilters();
+            });
+
+            document.getElementById('era-select').addEventListener('change', (e) => {
+                state.selectedEra = e.target.value;
+                applyFilters();
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', resetFilters);
+        }
+
+        function resetFilters() {
+            state.searchQuery = '';
+            state.selectedActor = null;
+            state.selectedEra = 'all';
+            
+            document.getElementById('search-input').value = '';
+            document.getElementById('era-select').value = 'all';
+            
+            const actorBtns = document.getElementById('actor-filters').children;
+            Array.from(actorBtns).forEach(btn => {
+                btn.style.backgroundColor = 'white';
+                btn.style.color = getColor(btn.dataset.actor);
+            });
+            
+            applyFilters();
+        }
+
+        function applyFilters() {
+            state.filteredData = rawData.filter(item => {
+                const actorKey = getActorCategory(item.actor);
+                const eraKey = getEraForYear(item.yearVal);
+                
+                // Search Filter
+                const searchMatch = item.content.toLowerCase().includes(state.searchQuery) || 
+                                    item.year.toLowerCase().includes(state.searchQuery) ||
+                                    item.actor.toLowerCase().includes(state.searchQuery);
+                
+                // Actor Filter
+                const actorMatch = state.selectedActor ? actorKey === state.selectedActor : true;
+                
+                // Era Filter
+                const eraMatch = state.selectedEra === 'all' ? true : eraKey === state.selectedEra;
+
+                return searchMatch && actorMatch && eraMatch;
+            });
+
+            renderTimeline();
+            updateChartHighlight();
+            
+            // Toggle Reset Button
+            const isFiltered = state.searchQuery || state.selectedActor || state.selectedEra !== 'all';
+            const resetBtn = document.getElementById('reset-btn');
+            if (isFiltered) resetBtn.classList.remove('hidden');
+            else resetBtn.classList.add('hidden');
+        }
+
+        // --- Rendering ---
+
+        function renderTimeline() {
+            const container = document.getElementById('timeline-feed');
+            const noResults = document.getElementById('no-results');
+            const countDisplay = document.getElementById('result-count');
+
+            container.innerHTML = '';
+            
+            if (state.filteredData.length === 0) {
+                noResults.classList.remove('hidden');
+                countDisplay.textContent = '0 건';
+                return;
+            } else {
+                noResults.classList.add('hidden');
+                countDisplay.textContent = `${state.filteredData.length} 건 표시중`;
+            }
+
+            let lastEra = '';
+
+            state.filteredData.forEach((item, index) => {
+                const actorKey = getActorCategory(item.actor);
+                const itemColor = getColor(actorKey);
+                const itemBg = getBgColor(actorKey);
+                const currentEra = getEraForYear(item.yearVal);
+
+                // Era Separator
+                if (currentEra !== lastEra && state.selectedEra === 'all') {
+                    const separator = document.createElement('div');
+                    separator.className = 'sticky top-0 z-10 py-2 bg-[#fdfbf7]/90 backdrop-blur-sm mb-4 border-b border-gray-200';
+                    separator.innerHTML = `<span class="font-bold text-gray-500 text-sm uppercase tracking-wide px-2">${currentEra}</span>`;
+                    container.appendChild(separator);
+                    lastEra = currentEra;
+                }
+
+                const card = document.createElement('div');
+                card.className = `timeline-item relative pl-8 pb-8 group`;
+                
+                // Timeline Line & Dot
+                card.innerHTML = `
+                    <div class="timeline-line group-last:hidden"></div>
+                    <div class="absolute left-[16px] top-2 w-4 h-4 rounded-full border-2 bg-white z-10 transform -translate-x-1/2" style="border-color: ${itemColor};"></div>
+                    
+                    <div class="card-hover bg-white rounded-lg border border-gray-100 p-5 shadow-sm hover:shadow-md relative overflow-hidden">
+                        <!-- Color Tab -->
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5" style="background-color: ${itemColor};"></div>
+                        
+                        <div class="flex flex-col sm:flex-row sm:items-start justify-between mb-2">
+                            <div>
+                                <span class="inline-block px-2 py-0.5 rounded text-xs font-bold mb-1" style="background-color: ${itemBg}; color: ${itemColor};">
+                                    ${item.year}
+                                </span>
+                                <h3 class="font-bold text-gray-800 text-lg">${item.category}</h3>
+                            </div>
+                            <span class="text-xs text-gray-400 mt-1 sm:mt-0 font-mono">Ref ${item.source}</span>
+                        </div>
+                        
+                        <p class="text-gray-600 leading-relaxed text-sm md:text-base">
+                            ${highlightText(item.content, state.searchQuery)}
+                        </p>
+                        
+                        <div class="mt-3 flex items-center gap-2">
+                            <span class="text-xs font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-500 border border-gray-200">
+                                ${item.actor}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="bg-yellow-200 text-gray-800 font-bold px-0.5 rounded">$1</span>');
+        }
+
+        // --- Chart.js Integration ---
+        let historyChart = null;
+
+        function renderChart() {
+            const ctx = document.getElementById('historyChart').getContext('2d');
+            
+            // Aggregate Data
+            const counts = {
+                korea: 0,
+                japan: 0,
+                relation: 0,
+                international: 0,
+                nature: 0
+            };
+
+            rawData.forEach(item => {
+                const key = getActorCategory(item.actor);
+                counts[key]++;
+            });
+
+            const data = {
+                labels: ['한국 기록', '일본 기록', '한일 관계', '국제/기타'],
+                datasets: [{
+                    label: '기록 수',
+                    data: [counts.korea, counts.japan, counts.relation, counts.international + counts.nature],
+                    backgroundColor: [
+                        colors.korea,
+                        colors.japan,
+                        colors.relation,
+                        colors.international
+                    ],
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    barThickness: 40
+                }]
+            };
+
+            const config = {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            padding: 12,
+                            titleFont: { family: 'Noto Sans KR', size: 13 },
+                            bodyFont: { family: 'Noto Sans KR', size: 12 },
+                            cornerRadius: 4,
+                            displayColors: false,
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw} 건의 역사적 기록`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f3f4f6',
+                                drawBorder: false
+                            },
+                            ticks: { font: { family: 'Noto Sans KR' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Noto Sans KR', size: 11 } }
+                        }
+                    },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const map = ['korea', 'japan', 'relation', 'international'];
+                            const actor = map[index];
+                            
+                            // Trigger Filter
+                            const btns = document.getElementById('actor-filters').children;
+                            // Find button matching this actor
+                            for (let btn of btns) {
+                                if (btn.dataset.actor === actor || (actor === 'international' && btn.dataset.actor === 'nature')) {
+                                    btn.click();
+                                    break;
+                                }
+                            }
+                        }
+                    },
+                    onHover: (event, chartElement) => {
+                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                    }
+                }
+            };
+
+            historyChart = new Chart(ctx, config);
+        }
+
+        function updateChartHighlight() {
+            if (!historyChart) return;
+            
+            const meta = historyChart.getDatasetMeta(0);
+            const map = ['korea', 'japan', 'relation', 'international'];
+
+            meta.data.forEach((bar, index) => {
+                const actorKey = map[index];
+                if (state.selectedActor) {
+                    // Dim non-selected
+                    const isSelected = actorKey === state.selectedActor || 
+                                     (state.selectedActor === 'nature' && actorKey === 'international');
+                    
+                    bar.options.backgroundColor = isSelected ? colors[actorKey] : '#e5e7eb';
+                } else {
+                    // Reset
+                    bar.options.backgroundColor = colors[actorKey];
+                }
+            });
+            
+            historyChart.update();
+        }
+
+    </script>
+</body>
+</html>
