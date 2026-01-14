@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>독도 아카이브 - 대한민국의 아침을 여는 섬</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #fdfbf7;
+            color: #333;
+        }
+        .serif-font {
+            font-family: 'Noto Serif KR', serif;
+        }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: #0f4c81;
+        }
+        .hero-bg {
+            background-color: #0f4c81;
+            background-image: 
+                radial-gradient(circle at 100% 100%, rgba(255,255,255,0.1) 10%, transparent 11%),
+                radial-gradient(circle at 0% 0%, rgba(255,255,255,0.1) 10%, transparent 11%);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-[#0f4c81] text-white rounded flex items-center justify-center font-bold serif-font group-hover:bg-[#1e3a8a] transition-colors">독</div>
+                <span class="text-xl font-bold text-gray-800 tracking-tight group-hover:text-[#0f4c81] transition-colors">독도 아카이브</span>
+            </a>
+            <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-500">
+                <a href="01.html" class="hover:text-[#0f4c81] transition-colors">정책</a>
+                <a href="02.html" class="hover:text-[#0f4c81] transition-colors">역사</a>
+                <a href="03.html" class="hover:text-[#0f4c81] transition-colors">용어</a>
+                <a href="04.html" class="hover:text-[#0f4c81] transition-colors">참여</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero-bg text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 relative z-10 text-center">
+            <div class="inline-block mb-4 px-3 py-1 border border-white/30 rounded-full text-xs font-light tracking-widest uppercase bg-white/10 backdrop-blur-md">
+                Dokdo, Republic of Korea
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black mb-6 leading-tight serif-font drop-shadow-lg">
+                진실의 기록,<br>독도를 말하다
+            </h1>
+            <p class="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto mb-10 font-light leading-relaxed">
+                역사적 사실과 국제법적 근거를 바탕으로<br class="hidden md:block">
+                독도가 대한민국의 영토임을 명확히 기록하고 보존합니다.
+            </p>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-16 bg-[#fdfbf7]" style="clip-path: polygon(0 100%, 100% 100%, 100% 60%, 0% 100%);"></div>
+    </header>
+
+    <!-- Main Navigation Grid -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-16 relative z-20">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- 01. 정책 -->
+            <a href="01.html" class="block group h-full">
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-[#0f4c81] p-8 h-full card-hover flex flex-col items-center text-center">
+                    <div class="w-14 h-14 bg-blue-50 text-[#0f4c81] rounded-full flex items-center justify-center text-2xl mb-5 group-hover:bg-[#0f4c81] group-hover:text-white transition-colors duration-300">
+                        <i class="fas fa-landmark"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#0f4c81] transition-colors">정부 정책</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">
+                        독도 영유권에 대한 대한민국 정부의 확고한 입장과 외교적 대응 원칙을 확인합니다.
+                    </p>
+                    <span class="text-[#0f4c81] text-sm font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
+                        자세히 보기 <i class="fas fa-arrow-right"></i>
+                    </span>
+                </div>
+            </a>
+
+            <!-- 02. 연표 -->
+            <a href="02.html" class="block group h-full">
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-[#3b82f6] p-8 h-full card-hover flex flex-col items-center text-center">
+                    <div class="w-14 h-14 bg-blue-50 text-[#3b82f6] rounded-full flex items-center justify-center text-2xl mb-5 group-hover:bg-[#3b82f6] group-hover:text-white transition-colors duration-300">
+                        <i class="fas fa-clock-rotate-left"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#3b82f6] transition-colors">역사 연표</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">
+                        512년 우산국 복속부터 현재까지, 독도와 관련된 주요 역사적 사건의 흐름을 파악합니다.
+                    </p>
+                    <span class="text-[#3b82f6] text-sm font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
+                        연표 탐색 <i class="fas fa-arrow-right"></i>
+                    </span>
+                </div>
+            </a>
+
+            <!-- 03. 용어 -->
+            <a href="03.html" class="block group h-full">
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-[#10b981] p-8 h-full card-hover flex flex-col items-center text-center">
+                    <div class="w-14 h-14 bg-emerald-50 text-[#10b981] rounded-full flex items-center justify-center text-2xl mb-5 group-hover:bg-[#10b981] group-hover:text-white transition-colors duration-300">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#10b981] transition-colors">용어 사전</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">
+                        지리, 국제법, 고문헌에 등장하는 독도 관련 주요 용어와 지명의 유래를 해설합니다.
+                    </p>
+                    <span class="text-[#10b981] text-sm font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
+                        용어 검색 <i class="fas fa-arrow-right"></i>
+                    </span>
+                </div>
+            </a>
+
+            <!-- 04. 의견 -->
+            <a href="04.html" class="block group h-full">
+                <div class="bg-white rounded-xl shadow-lg border-t-4 border-[#f59e0b] p-8 h-full card-hover flex flex-col items-center text-center">
+                    <div class="w-14 h-14 bg-amber-50 text-[#f59e0b] rounded-full flex items-center justify-center text-2xl mb-5 group-hover:bg-[#f59e0b] group-hover:text-white transition-colors duration-300">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#f59e0b] transition-colors">의견 수렴</h2>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">
+                        독도 수호와 홍보 방안에 대한 국민 여러분의 소중한 생각과 제안을 듣습니다.
+                    </p>
+                    <span class="text-[#f59e0b] text-sm font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
+                        의견 남기기 <i class="fas fa-arrow-right"></i>
+                    </span>
+                </div>
+            </a>
+
+        </div>
+
+        <!-- Info Grid -->
+        <div class="grid md:grid-cols-2 gap-8 mt-12">
+            <!-- Fact Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex items-start gap-6">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-map-marked-alt text-4xl text-gray-300"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">지리적 위치</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed mb-3">
+                        경상북도 울릉군 울릉읍 독도리 1~96번지.<br>
+                        울릉도에서 동남쪽으로 87.4km 떨어져 있어 맑은 날에는 울릉도에서 독도를 육안으로 확인할 수 있습니다.
+                    </p>
+                    <div class="text-xs text-gray-400 font-mono">37°14′26.8″N 131°52′10.4″E</div>
+                </div>
+            </div>
+
+            <!-- External Link Card -->
+            <div class="bg-[#0f4c81] rounded-xl shadow-sm p-8 text-white flex flex-col justify-between relative overflow-hidden group">
+                <div class="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-bl-full transition-transform group-hover:scale-110"></div>
+                <div>
+                    <h3 class="text-lg font-bold mb-2">독도 실시간 영상</h3>
+                    <p class="text-blue-100 text-sm leading-relaxed mb-6">
+                        KBS에서 제공하는 24시간 독도 실시간 라이브 영상을 통해 지금 이 순간의 독도를 만나보세요.
+                    </p>
+                </div>
+                <a href="https://www.youtube.com/results?search_query=독도+실시간" target="_blank" class="inline-flex items-center gap-2 text-sm font-bold hover:text-blue-200 transition-colors">
+                    <i class="fab fa-youtube"></i> 실시간 영상 보러가기
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-10 mt-auto border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-center md:text-left">
+                <p class="font-bold text-white text-lg serif-font mb-1">독도 아카이브</p>
+                <p class="text-xs text-gray-500">본 사이트는 독도 관련 정보를 제공하는 교육용 웹 페이지입니다.</p>
+            </div>
+            <div class="flex gap-6 text-sm">
+                <a href="01.html" class="hover:text-white transition-colors">정책</a>
+                <a href="02.html" class="hover:text-white transition-colors">역사</a>
+                <a href="03.html" class="hover:text-white transition-colors">용어</a>
+                <a href="04.html" class="hover:text-white transition-colors">참여</a>
+            </div>
+            <div class="text-xs text-gray-600">
+                &copy; 2024 Dokdo Archive.
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
